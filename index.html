@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Kunal — Links & Notes</title>
+        <meta
+            name="description"
+            content="Kunal's links and occasional writing."
+        />
+
+        <!-- Preconnect early; stylesheet link itself is placed after the
+     critical inline CSS below so fonts never block first paint. -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+        <!--
+  ============================================================
+  HOW THIS FILE IS ORGANIZED
+  ============================================================
+  1. <style>   — design tokens (CSS variables) + all visual styling.
+                 No framework/CDN dependency, so nothing renders
+                 until the browser has the whole page: fast on
+                 mobile networks, no CDN outage risk on Cloudflare.
+  2. <body>    — static markup shell (header, section containers).
+  3. <script>  — CONFIG object with your links + blog posts, and
+                 the render/interaction logic.
+
+  TO UPDATE YOUR SITE:
+  - Edit `PROFILE`, `SOCIAL_LINKS`, and `POSTS` inside the
+    <script> block at the bottom. Nothing else needs to change.
+  - To add a blog post, copy one object in the POSTS array and
+    fill in title / date / excerpt / content. `content` accepts
+    plain HTML (e.g. <p>, <strong>, <a>), so simple markdown you
+    hand-convert to HTML works fine — no build step needed.
+  ============================================================
+-->
+
+        <style>
+            /* ---------------------------------------------------------
+     DESIGN TOKENS
+     Dark graphite base + three muted jewel-tone glows (violet /
+     teal / magenta) instead of one bright accent — gives the
+     glass cards something varied to catch light from as they
+     drift past, without ever feeling neon or "AI demo" bright.
+     --------------------------------------------------------- */
+            :root {
+                --bg: #0a0d12;
+                --bg-2: #0d1118;
+                --surface: rgba(255, 255, 255, 0.055);
+                --surface-hover: rgba(255, 255, 255, 0.09);
+                --border: rgba(255, 255, 255, 0.09);
+                --border-hover: rgba(255, 255, 255, 0.16);
+                --text: #edeff3;
+                --text-muted: #8b93a5;
+                --text-faint: #5b6376;
+                --violet: #7c6cff;
+                --teal: #24d6b5;
+                --magenta: #f14fa0;
+                --radius-lg: 22px;
+                --radius-md: 16px;
+                --font-display:
+                    "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+                --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+                --font-mono:
+                    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo,
+                    monospace;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html {
+                color-scheme: dark;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100svh;
+                background: var(--bg);
+                color: var(--text);
+                font-family: var(--font-body);
+                -webkit-font-smoothing: antialiased;
+                overflow-x: hidden;
+            }
+
+            /* ---------------------------------------------------------
+     AMBIENT BACKGROUND — three blurred gradient blobs drifting
+     slowly. transform + opacity only (GPU-composited), so this
+     stays smooth on mid-range phones. Fixed so it never affects
+     page layout/scroll performance.
+     --------------------------------------------------------- */
+            .bg-scene {
+                position: fixed;
+                inset: 0;
+                z-index: 0;
+                overflow: hidden;
+                background: radial-gradient(
+                    ellipse at top,
+                    var(--bg-2),
+                    var(--bg) 60%
+                );
+            }
+            .blob {
+                position: absolute;
+                width: 60vmax;
+                height: 60vmax;
+                border-radius: 50%;
+                filter: blur(90px);
+                opacity: 0.35;
+                will-change: transform;
+            }
+            .blob-1 {
+                background: var(--violet);
+                top: -20%;
+                left: -20%;
+                animation: drift1 26s ease-in-out infinite;
+            }
+            .blob-2 {
+                background: var(--teal);
+                bottom: -25%;
+                right: -15%;
+                animation: drift2 32s ease-in-out infinite;
+            }
+            .blob-3 {
+                background: var(--magenta);
+                top: 30%;
+                right: 10%;
+                width: 45vmax;
+                height: 45vmax;
+                opacity: 0.22;
+                animation: drift3 38s ease-in-out infinite;
+            }
+
+            @keyframes drift1 {
+                0%,
+                100% {
+                    transform: translate(0, 0) scale(1);
+                }
+                50% {
+                    transform: translate(8%, 10%) scale(1.08);
+                }
+            }
+            @keyframes drift2 {
+                0%,
+                100% {
+                    transform: translate(0, 0) scale(1);
+                }
+                50% {
+                    transform: translate(-6%, -8%) scale(1.05);
+                }
+            }
+            @keyframes drift3 {
+                0%,
+                100% {
+                    transform: translate(0, 0) scale(1);
+                }
+                50% {
+                    transform: translate(-10%, 6%) scale(0.94);
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .blob {
+                    animation: none;
+                }
+                * {
+                    scroll-behavior: auto !important;
+                }
+            }
+
+            /* ---------------------------------------------------------
+     LAYOUT
+     --------------------------------------------------------- */
+            .page {
+                position: relative;
+                z-index: 1;
+                max-width: 460px;
+                margin: 0 auto;
+                padding: 56px 20px 80px;
+            }
+
+            /* ---------------------------------------------------------
+     GLASS SURFACE (shared by link cards + blog cards)
+     --------------------------------------------------------- */
+            .glass {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-lg);
+                backdrop-filter: blur(18px) saturate(140%);
+                -webkit-backdrop-filter: blur(18px) saturate(140%);
+            }
+
+            /* ---------------------------------------------------------
+     HEADER
+     --------------------------------------------------------- */
+            .header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .avatar {
+                width: 88px;
+                height: 88px;
+                margin: 0 auto 18px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: var(--font-display);
+                font-weight: 700;
+                font-size: 28px;
+                background: linear-gradient(
+                    135deg,
+                    var(--violet),
+                    var(--magenta)
+                );
+                border: 1px solid var(--border-hover);
+                box-shadow: 0 0 0 6px var(--surface);
+                overflow: hidden; /* keeps a photo clipped to the circle */
+            }
+            /* ★★★ ADD YOUR PICTURE — this rule styles the <img> once you
+     uncomment it below in the HTML body (search "ADD YOUR PICTURE").
+     No other CSS changes needed. */
+            .avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .name {
+                font-family: var(--font-display);
+                font-weight: 700;
+                font-size: 26px;
+                letter-spacing: -0.01em;
+                margin: 0 0 6px;
+            }
+
+            .tagline {
+                font-family: var(--font-body);
+                font-weight: 500;
+                font-size: 14px;
+                color: var(--teal);
+                margin: 0 0 14px;
+            }
+
+            .bio {
+                color: var(--text-muted);
+                font-size: 14.5px;
+                line-height: 1.6;
+                max-width: 340px;
+                margin: 0 auto;
+            }
+
+            /* ---------------------------------------------------------
+     SECTION LABELS
+     --------------------------------------------------------- */
+            .section-label {
+                font-family: var(--font-mono);
+                font-size: 11.5px;
+                font-weight: 500;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--text-faint);
+                margin: 36px 0 14px;
+                padding-left: 2px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .section-label::after {
+                content: "";
+                flex: 1;
+                height: 1px;
+                background: var(--border);
+            }
+
+            /* ---------------------------------------------------------
+     SOCIAL LINK CARDS
+     --------------------------------------------------------- */
+            .links {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .link-card {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 15px 18px;
+                text-decoration: none;
+                color: var(--text);
+                transition:
+                    transform 0.15s ease,
+                    background 0.15s ease,
+                    border-color 0.15s ease;
+            }
+            .link-card:hover {
+                background: var(--surface-hover);
+                border-color: var(--border-hover);
+                transform: translateY(-2px);
+            }
+            .link-card:active {
+                transform: translateY(0) scale(0.98);
+            }
+            .link-card:focus-visible {
+                outline: 2px solid var(--teal);
+                outline-offset: 2px;
+            }
+
+            .link-icon {
+                flex: none;
+                width: 38px;
+                height: 38px;
+                border-radius: 11px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.06);
+            }
+            .link-icon svg {
+                width: 19px;
+                height: 19px;
+            }
+
+            .link-text {
+                flex: 1;
+                min-width: 0;
+            }
+            .link-title {
+                font-weight: 600;
+                font-size: 14.5px;
+            }
+            .link-sub {
+                font-size: 12.5px;
+                color: var(--text-muted);
+            }
+
+            .link-arrow {
+                color: var(--text-faint);
+                transition: transform 0.15s ease;
+            }
+            .link-card:hover .link-arrow {
+                transform: translate(2px, -2px);
+                color: var(--text-muted);
+            }
+
+            /* ---------------------------------------------------------
+     BLOG CARDS
+     --------------------------------------------------------- */
+            .posts {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .post-card {
+                padding: 20px;
+                cursor: pointer;
+                transition:
+                    background 0.15s ease,
+                    border-color 0.15s ease;
+            }
+            .post-card:hover {
+                background: var(--surface-hover);
+                border-color: var(--border-hover);
+            }
+            .post-card:focus-visible {
+                outline: 2px solid var(--teal);
+                outline-offset: 2px;
+            }
+
+            .post-date {
+                font-family: var(--font-mono);
+                font-size: 11.5px;
+                color: var(--magenta);
+                letter-spacing: 0.02em;
+            }
+            .post-title {
+                font-family: var(--font-display);
+                font-weight: 600;
+                font-size: 17px;
+                margin: 6px 0 8px;
+            }
+            .post-excerpt {
+                font-size: 13.5px;
+                line-height: 1.55;
+                color: var(--text-muted);
+                margin: 0 0 12px;
+            }
+            .read-more {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--teal);
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .read-more:hover {
+                text-decoration: underline;
+            }
+
+            /* Expanded post view: fades/slides in place of the closed card.
+     A single element toggles class, so there's no layout jump
+     from a second overlapping node. */
+            .post-full {
+                display: none;
+            }
+            .post-card.expanded .post-summary {
+                display: none;
+            }
+            .post-card.expanded .post-full {
+                display: block;
+                animation: expandIn 0.28s ease;
+            }
+            @keyframes expandIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .post-body {
+                font-size: 14px;
+                line-height: 1.7;
+                color: #d6d9e0;
+            }
+            .post-body p {
+                margin: 0 0 12px;
+            }
+            .post-body a {
+                color: var(--teal);
+            }
+
+            .close-btn {
+                font-family: var(--font-mono);
+                font-size: 12px;
+                color: var(--text-muted);
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                padding: 7px 14px;
+                margin-top: 14px;
+                cursor: pointer;
+                transition:
+                    background 0.15s ease,
+                    color 0.15s ease;
+            }
+            .close-btn:hover {
+                background: var(--surface-hover);
+                color: var(--text);
+            }
+
+            /* ---------------------------------------------------------
+     FOOTER
+     --------------------------------------------------------- */
+            .footer {
+                margin-top: 48px;
+                text-align: center;
+                font-family: var(--font-mono);
+                font-size: 11.5px;
+                color: var(--text-faint);
+            }
+
+            @media (max-width: 380px) {
+                .page {
+                    padding: 40px 14px 60px;
+                }
+                .name {
+                    font-size: 23px;
+                }
+            }
+        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+
+    <body>
+        <!-- Ambient animated background, purely decorative -->
+        <div class="bg-scene" aria-hidden="true">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+
+        <main class="page">
+            <!-- ============ PROFILE HEADER ============ -->
+            <header class="header">
+                <div class="avatar">
+                    <!-- ★★★ ADD YOUR PICTURE ★★★
+           1. Put your photo file next to this HTML file (e.g. "avatar.jpg").
+           2. Delete the <span id="avatar-initials">...</span> line below.
+           3. Uncomment the <img> line below it and set the src/alt.
+           That's it — the CSS above already clips it into the circle. -->
+                    <!-- <span id="avatar-initials">KP</span> -->
+                    <img src="avatar.jpg" alt="Kunal" />
+                </div>
+                <h1 class="name" id="profile-name">Kunal</h1>
+                <p class="tagline" id="profile-tagline">
+                    Professionally fine, personally a mess
+                </p>
+                <p class="bio" id="profile-bio">
+                    Allegedly an adult. Here for the links, occasionally here
+                    for the opinions.
+                </p>
+            </header>
+
+            <!-- ============ SOCIAL LINKS ============ -->
+            <p class="section-label">links</p>
+            <nav
+                class="links"
+                id="links-container"
+                aria-label="Social links"
+            ></nav>
+
+            <!-- ============ BLOG ============ -->
+            <p class="section-label">writing</p>
+            <section
+                class="posts"
+                id="posts-container"
+                aria-label="Blog posts"
+            ></section>
+
+            <footer class="footer">
+                © <span id="year"></span> — deployed on Cloudflare
+            </footer>
+        </main>
+
+        <script>
+            /* =============================================================
+     CONFIG — everything you'll actually want to edit lives here.
+     ============================================================= */
+
+            const PROFILE = {
+                initials: "KP",
+                name: "Kunal",
+                tagline: "Professionally fine, personally a mess",
+                bio: "Allegedly an adult. Here for the links, occasionally here for the opinions.",
+                // ★ Picture: this text config doesn't control the photo — that's
+                // done directly in the HTML markup. Search "ADD YOUR PICTURE"
+                // further down this file for the 3-step swap.
+            };
+
+            // Icons are inline SVG (no external requests). Add more platforms
+            // by adding a key to ICONS and referencing it in SOCIAL_LINKS.
+            const ICONS = {
+                github: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.09 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.87-1.54-3.87-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.78 2.71 1.26 3.37.97.1-.75.4-1.26.73-1.55-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.59.24 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.43-2.7 5.4-5.28 5.69.42.36.78 1.08.78 2.18 0 1.57-.01 2.84-.01 3.23 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>`,
+                linkedin: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.58c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.95v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>`,
+                twitter: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2.25h3.07l-6.71 7.67 7.9 10.83h-6.2l-4.85-6.53-5.55 6.53H3.5l7.18-8.2L3.1 2.25h6.36l4.38 5.98 4.06-5.98Zm-1.08 16.7h1.7L7.05 4h-1.83l12.6 14.95Z"/></svg>`,
+                instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>`,
+                email: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/></svg>`,
+                globe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.75 6 3.75 9S14.5 20.3 12 21c-2.5-.7-3.75-6-3.75-9S9.5 5.7 12 3Z"/></svg>`,
+            };
+
+            const SOCIAL_LINKS = [
+                {
+                    icon: "globe",
+                    title: "infer.",
+                    sub: "the software company I run",
+                    url: "https://infer.dpdns.org",
+                },
+                {
+                    icon: "github",
+                    title: "GitHub",
+                    sub: "code & side projects",
+                    url: "https://github.com/Kunal70616c",
+                },
+                {
+                    icon: "linkedin",
+                    title: "LinkedIn",
+                    sub: "the professional version of me",
+                    url: "https://linkedin.com/in/Kunal70616c",
+                },
+                {
+                    icon: "twitter",
+                    title: "X / Twitter",
+                    sub: "unfiltered version",
+                    url: "https://x.com/KunalPal_",
+                },
+                {
+                    icon: "instagram",
+                    title: "Instagram",
+                    sub: "mostly food and chaos",
+                    url: "https://instagram.com/kunal_on_earth.jpg",
+                },
+                {
+                    icon: "email",
+                    title: "Email",
+                    sub: "actually replies, usually",
+                    url: "mailto:kunal.cs.dev@outlook.com",
+                },
+            ];
+
+            // Add a post by copying an object below. `content` is plain
+            // HTML rendered inside the expanded card.
+            const POSTS = [
+                {
+                    date: "Aug 2026",
+                    title: "Why I stopped trusting my own estimates",
+                    excerpt:
+                        "A short post on why 'two days' never means two days, and what I do about it now.",
+                    content: `
+        <p>Every estimate I give starts as a guess wearing a suit. It looks confident,
+        it has a number attached, and it is almost always wrong in the same direction.</p>
+        <p>What's changed isn't my estimating — it's that I now pad for the parts of
+        the work I can't see yet: the dependency that's slightly out of date, the
+        edge case nobody mentioned in standup, the config that only breaks in prod.</p>
+        <p>None of this is a system. It's just an admission that the plan is a
+        starting point, not a contract.</p>
+      `,
+                },
+                {
+                    date: "Jul 2026",
+                    title: "Notes from moving to SAP Data Services",
+                    excerpt:
+                        "Coming from a Java/microservices background, here's what surprised me most.",
+                    content: `
+        <p>The biggest adjustment wasn't the tooling, it was the mental model — going
+        from services that react to events to jobs that move and reshape data in bulk.</p>
+        <p>Debugging feels different too: fewer stack traces, more staring at row
+        counts before and after a transform trying to figure out where they diverged.</p>
+      `,
+                },
+                {
+                    date: "Jun 2026",
+                    title: "A checklist I wish I had on day one",
+                    excerpt:
+                        "Small habits that would've saved me a lot of re-work early on.",
+                    content: `
+        <p>Write down the assumption before you write the code that depends on it.
+        Half of my early bugs were correct code solving the wrong problem.</p>
+        <p>Also: commit smaller and more often than feels necessary. Future you is
+        debugging this at 11pm and will not thank past you for a 40-file commit.</p>
+      `,
+                },
+            ];
+
+            /* =============================================================
+     RENDER — you shouldn't need to touch anything below this line
+     unless you're changing structure/behavior rather than content.
+     ============================================================= */
+
+            function renderProfile() {
+                // Guarded: the initials <span> is optional — once you swap
+                // in a real <img> (see "ADD YOUR PICTURE" above), that span
+                // is gone from the page, so we only touch it if it exists.
+                const initialsEl = document.getElementById("avatar-initials");
+                if (initialsEl) initialsEl.textContent = PROFILE.initials;
+
+                document.getElementById("profile-name").textContent =
+                    PROFILE.name;
+                document.getElementById("profile-tagline").textContent =
+                    PROFILE.tagline;
+                document.getElementById("profile-bio").textContent =
+                    PROFILE.bio;
+            }
+
+            function renderLinks() {
+                const container = document.getElementById("links-container");
+                container.innerHTML = SOCIAL_LINKS.map(
+                    (link) => `
+      <a class="link-card glass" href="${link.url}" target="_blank" rel="noopener noreferrer">
+        <span class="link-icon">${ICONS[link.icon] || ""}</span>
+        <span class="link-text">
+          <span class="link-title">${link.title}</span><br/>
+          <span class="link-sub">${link.sub}</span>
+        </span>
+        <span class="link-arrow" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 17 17 7M9 7h8v8"/>
+          </svg>
+        </span>
+      </a>
+    `,
+                ).join("");
+            }
+
+            function renderPosts() {
+                const container = document.getElementById("posts-container");
+                container.innerHTML = POSTS.map(
+                    (post, i) => `
+      <article class="post-card glass" id="post-${i}" tabindex="0">
+        <div class="post-summary" onclick="expandPost(${i})">
+          <div class="post-date">${post.date}</div>
+          <h3 class="post-title">${post.title}</h3>
+          <p class="post-excerpt">${post.excerpt}</p>
+          <button class="read-more" onclick="event.stopPropagation(); expandPost(${i})">
+            Read more →
+          </button>
+        </div>
+        <div class="post-full">
+          <div class="post-date">${post.date}</div>
+          <h3 class="post-title">${post.title}</h3>
+          <div class="post-body">${post.content}</div>
+          <button class="close-btn" onclick="collapsePost(${i})">← Close</button>
+        </div>
+      </article>
+    `,
+                ).join("");
+
+                // Enter/space opens a focused, unexpanded card (keyboard access)
+                container.querySelectorAll(".post-card").forEach((card, i) => {
+                    card.addEventListener("keydown", (e) => {
+                        if (
+                            (e.key === "Enter" || e.key === " ") &&
+                            !card.classList.contains("expanded")
+                        ) {
+                            e.preventDefault();
+                            expandPost(i);
+                        }
+                    });
+                });
+            }
+
+            function expandPost(index) {
+                const card = document.getElementById(`post-${index}`);
+                card.classList.add("expanded");
+                // Smoothly bring the opened post into view on small screens
+                card.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            function collapsePost(index) {
+                const card = document.getElementById(`post-${index}`);
+                card.classList.remove("expanded");
+            }
+
+            document.getElementById("year").textContent =
+                new Date().getFullYear();
+
+            renderProfile();
+            renderLinks();
+            renderPosts();
+        </script>
+    </body>
+</html>
